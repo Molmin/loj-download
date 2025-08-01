@@ -218,6 +218,9 @@ ${section.text}
             time: `${judge.timeLimit}ms`,
             memory: `${judge.memoryLimit}m`,
         };
+        const cfg: Record<string, any> = {};
+        const TL = judge.timeLimit;
+        const ML = judge.memoryLimit * 1024;
         if (judge.extraSourceFiles) {
             const files: string[] = [];
             for (const key in judge.extraSourceFiles) {
@@ -239,6 +242,7 @@ ${section.text}
         }
         if (judge.subtasks?.length) {
             config.subtasks = [];
+            let id = 0;
             for (const subtask of judge.subtasks) {
                 const current: SubtaskConfig = {
                     score: subtask.points,
@@ -247,9 +251,20 @@ ${section.text}
                 };
                 if (subtask.dependencies) current.if = subtask.dependencies;
                 config.subtasks.push(current);
+                for (const c of current.cases) {
+                    if (cfg[c.input]) continue;
+                    cfg[c.input] = {
+                        timeLimit: TL,
+                        memoryLimit: ML,
+                        score: current.score,
+                        subtaskId: id,
+                    };
+                }
+                id++;
             }
         }
         write('testdata/config.yaml', Buffer.from(yaml.dump(config)));
+        write('testdata/config.yml', Buffer.from(yaml.dump(cfg)));
     }
     let downloadedSize = 0;
     let totalSize = result.body.testData.map(i => i.size).reduce((a, b) => a + b, 0)
